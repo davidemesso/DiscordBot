@@ -530,13 +530,14 @@ function inverse(trigger, matrix)
             let negatives = 0;
             if(num < 0) negatives++;
             if(det < 0) negatives++;
+            let sign = 1;
             
             const denabs = Math.abs(det);
             let numabs = Math.abs(num);
             if(negatives == 1)
-                numabs = -numabs;
+                sign = -1;
 
-            inv[i][j] = num == den ? 1 : numabs + "/" + denabs;
+            inv[i][j] = numabs == denabs ? 1 * sign : (numabs * sign) + "/" + denabs;
         }
 
     return inv; 

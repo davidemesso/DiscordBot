@@ -21,59 +21,34 @@ client.on('message', msg => {
 
 client.login(process.env.TOKEN);
 
+const commandFunctions = {
+    'ping' : (msg) => {if(checkParameters(msg, "ping")) replyWith(msg, "Pong!", true);},
+    'help' : (msg) => {if(checkParameters(msg, "help")) sendHelp(msg);},
+    'quote' : (msg) => {if(checkParameters(msg, "quote")) sendRandomQuote(msg);},
+    'allQuotes' : (msg) => {if(checkParameters(msg, "allQuotes")) sendAllQuotes(msg);},
+    'gif' : (msg) => {if(checkParameters(msg, "gif")) sendGif(msg);},
+    'photo' : (msg) => {if(checkParameters(msg, "photo")) sendRandomImage(msg);},
+    'addQuote' : addQuote,
+    'removeQuote' : removeQuote,
+    'playAudio' : playAudio,
+    'printMatrix' : printMatrix,
+    'det' : determinant,
+    'transpose' : transpose,
+    'inverse' : sendInverse,
+    'rank' : rankOfMatrix ,
+}
+
 function handleCommand(msg)
 {
     const command = msg.content.replace("!arrigo ", "").split(" ")[0];
-    switch(command)
+    try
     {
-        case 'ping':
-            if(checkParameters(msg, "ping"))
-                replyWith(msg, "Pong!", true);
-            break;
-        case 'help':
-            if(checkParameters(msg, "help"))
-                sendHelp(msg);
-            break;
-        case 'quote':
-            if(checkParameters(msg, "quote"))
-                sendRandomQuote(msg);
-            break;
-        case 'allQuotes':
-            if(checkParameters(msg, "allQuotes"))
-                sendAllQuotes(msg);
-            break;
-        case 'gif':
-            if(checkParameters(msg, "gif"))
-                sendGif(msg);
-            break;
-        case 'photo':
-            if(checkParameters(msg, "photo"))
-                sendRandomImage(msg);
-            break;
-        case 'addQuote':
-            addQuote(msg);
-            break;
-        case 'removeQuote':
-            removeQuote(msg);
-            break;
-        case 'playAudio':
-            playAudio(msg);
-            break;
-        case 'printMatrix':
-            printMatrix(msg);
-            break;
-        case 'det':
-            determinant(msg);
-            break;
-        case 'transpose':
-            transpose(msg);
-            break;
-        case 'inverse':
-            sendInverse(msg);
-            break;
-        default:
-            replyWith(msg, "Comando non valido!");
+        commandFunctions[command](msg);
     }
+    catch 
+    {
+        replyWith(msg, "Comando non valido!", true);
+    }   
 }
 
 const commandList = {
@@ -90,6 +65,7 @@ const commandList = {
     "det": "JSON : matrix (sqare)",
     "transpose": "JSON : matrix (sqare)",
     "inverse": "JSON : matrix (sqare)",
+    "rank": "JSON : matrix (sqare)",
 }
 
 function checkParameters(msg, command)
@@ -571,3 +547,92 @@ function sendInverse(trigger)
     }   
 
 }
+
+
+function rankOfMatrix(trigger) 
+{ 
+    const parameter = trigger.content.replace("!arrigo rank ", "").trim().split(" ");
+    if(parameter == "")
+    {
+        replyWith(trigger, "Richiesto parametro! (Matrice in JSON)"); 
+        return
+    }
+
+    try
+    {
+        const mat = JSON.parse(parameter);
+
+        let result = 0;
+        const C = mat.length;
+        const R = mat[0].length;
+        let rank = C; 
+    
+        for (let row = 0; row < rank; row++) 
+        { 
+            if (mat[row][row]) 
+            { 
+                for (let col = 0; col < R; col++) 
+                { 
+                    if (col != row) 
+                    { 
+                        // This makes all entries of current 
+                        // column as 0 except entry 'mat[row][row]' 
+                        let mult = mat[col][row] / mat[row][row]; 
+                        for (let i = 0; i < rank; i++) 
+                        mat[col][i] -= mult * mat[row][i]; 
+                    } 
+                } 
+            }  
+            else
+            { 
+                let reduce = true; 
+    
+                /* Find the non-zero element in current 
+                    column  */
+                for (let i = row + 1; i < R;  i++) 
+                { 
+                    // Swap the row with non-zero element 
+                    // with this row. 
+                    if (mat[i][row]) 
+                    { 
+                        mat = swap(mat, row, i, rank); 
+                        reduce = false; 
+                        break ; 
+                    } 
+                } 
+    
+                if (reduce) 
+                { 
+                    rank--; 
+                    for (let i = 0; i < R; i ++) 
+                        mat[i][row] = mat[i][rank]; 
+                } 
+    
+                row--; 
+            } 
+    
+        } 
+        result = rank; 
+        replyWith(trigger, "Il rango della matrice: \n" +
+                            formatMatrix(parameter) + "\n" + 
+                            "è\n" +  result); 
+    }
+    catch (error) 
+    {
+        console.error(error);
+        replyWith(trigger, "Formato matrice non valido"); 
+        return;
+    }   
+    
+} 
+
+function swap(mat, row1, row2, col) 
+{ 
+    for (let i = 0; i < col; i++) 
+    { 
+        let temp = mat[row1][i]; 
+        mat[row1][i] = mat[row2][i]; 
+        mat[row2][i] = temp; 
+    } 
+    return mat;
+} 
